@@ -68,7 +68,8 @@ class PatchDAutoencoderOptimizer(BaseOptimizer):
         g_losses, g_metrics = self.model(images, gl_ma,
                                          command="compute_generator_losses")
         g_loss = sum([v.mean() for v in g_losses.values()])
-        g_loss.backward()
+#         g_loss.backward()
+        self.accelerator.backward(g_loss)
         self.optimizer_G.step()
         g_losses.update(g_metrics)
         return g_losses
@@ -88,7 +89,8 @@ class PatchDAutoencoderOptimizer(BaseOptimizer):
         d_losses.update(nce_losses)
         d_metrics.update(nce_metrics)
         d_loss = sum([v.mean() for v in d_losses.values()])
-        d_loss.backward()
+#         d_loss.backward()
+        self.accelerator.backward(d_loss)
         self.optimizer_D.step()
         needs_R1 = (self.opt.lambda_R1 > 0.0 or self.opt.lambda_patch_R1) and \
                    (self.num_discriminator_iters % self.opt.R1_once_every == 0)
@@ -99,7 +101,8 @@ class PatchDAutoencoderOptimizer(BaseOptimizer):
             d_losses.update(r1_losses)
             r1_loss = sum([v.mean() for v in r1_losses.values()])
             r1_loss = r1_loss * self.opt.R1_once_every
-            r1_loss.backward()
+#             r1_loss.backward()
+            self.accelerator.backward(r1_loss)
             self.optimizer_D.step()
 
         d_losses.update(d_metrics)

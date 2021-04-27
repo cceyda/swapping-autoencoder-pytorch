@@ -73,7 +73,8 @@ class SwappingAutoencoderOptimizer(BaseOptimizer):
             images, sp_ma, gl_ma, command="compute_generator_losses"
         )
         g_loss = sum([v.mean() for v in g_losses.values()])
-        g_loss.backward()
+#         g_loss.backward()
+        self.accelerator.backward(g_loss)
         self.optimizer_G.step()
         g_losses.update(g_metrics)
         return g_losses
@@ -91,7 +92,8 @@ class SwappingAutoencoderOptimizer(BaseOptimizer):
         self.previous_sp = sp.detach()
         self.previous_gl = gl.detach()
         d_loss = sum([v.mean() for v in d_losses.values()])
-        d_loss.backward()
+#         d_loss.backward()
+        self.accelerator.backward(d_loss)
         self.optimizer_D.step()
 
         needs_R1 = self.opt.lambda_R1 > 0.0 or self.opt.lambda_patch_R1 > 0.0
@@ -103,7 +105,8 @@ class SwappingAutoencoderOptimizer(BaseOptimizer):
             d_losses.update(r1_losses)
             r1_loss = sum([v.mean() for v in r1_losses.values()])
             r1_loss = r1_loss * self.opt.R1_once_every
-            r1_loss.backward()
+#             r1_loss.backward()
+            self.accelerator.backward(r1_loss)
             self.optimizer_D.step()
 
         d_losses["D_total"] = sum([v.mean() for v in d_losses.values()])

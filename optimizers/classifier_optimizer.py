@@ -21,7 +21,8 @@ class ClassifierOptimizer(SwappingAutoencoderOptimizer):
         self.optimizer_C.zero_grad()
         losses, metrics = self.model(images, labels, command="compute_classifier_losses")
         loss = sum([v.mean() for v in losses.values()])
-        loss.backward()
+#         loss.backward()
+        self.accelerator.backward(loss)
         self.optimizer_C.step()
         losses.update(metrics)
         return losses

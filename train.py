@@ -6,8 +6,9 @@ from util import IterationCounter
 from util import Visualizer
 from util import MetricTracker
 from evaluation import GroupEvaluator
+from accelerate import Accelerator
 
-
+accelerator = Accelerator(device_placement=False)
 opt = TrainOptions().parse()
 dataset = data.create_dataset(opt)
 opt.dataset = dataset
@@ -18,6 +19,9 @@ evaluators = GroupEvaluator(opt)
 
 model = models.create_model(opt)
 optimizer = optimizers.create_optimizer(opt, model)
+optimizer.accelerator=accelerator
+
+model, optimizer, dataset.dataloader = accelerator.prepare(model, optimizer, dataset.dataloader)
 
 while not iter_counter.completed_training():
     with iter_counter.time_measurement("data"):
