@@ -69,11 +69,11 @@ class SwappingAutoencoderOptimizer(BaseOptimizer):
         self.set_requires_grad(self.Gparams, True)
         sp_ma, gl_ma = None, None
         self.optimizer_G.zero_grad()
-        with autocast():
-            g_losses, g_metrics = self.model(
-                images, sp_ma, gl_ma, command="compute_generator_losses"
-            )
-            g_loss = sum([v.mean() for v in g_losses.values()])
+#         with autocast():
+        g_losses, g_metrics = self.model(
+            images, sp_ma, gl_ma, command="compute_generator_losses"
+        )
+        g_loss = sum([v.mean() for v in g_losses.values()])
 #         g_loss.backward()
         self.accelerator.backward(g_loss)
         self.optimizer_G.step()
@@ -87,12 +87,12 @@ class SwappingAutoencoderOptimizer(BaseOptimizer):
         self.set_requires_grad(self.Gparams, False)
         self.discriminator_iter_counter += 1
         self.optimizer_D.zero_grad()
-        with autocast():
-            d_losses, d_metrics, sp, gl = self.model(
-                images, command="compute_discriminator_losses"
-            )
+#         with autocast():
+        d_losses, d_metrics, sp, gl = self.model(
+            images, command="compute_discriminator_losses"
+        )
 
-            d_loss = sum([v.mean() for v in d_losses.values()])
+        d_loss = sum([v.mean() for v in d_losses.values()])
         self.previous_sp = sp.detach()
         self.previous_gl = gl.detach()
 #         d_loss.backward()
@@ -104,11 +104,11 @@ class SwappingAutoencoderOptimizer(BaseOptimizer):
             self.discriminator_iter_counter % self.opt.R1_once_every == 0
         if needs_R1_at_current_iter:
             self.optimizer_D.zero_grad()
-            with autocast():
-                r1_losses = self.model(images, command="compute_R1_loss")
-                d_losses.update(r1_losses)
-                r1_loss = sum([v.mean() for v in r1_losses.values()])
-                r1_loss = r1_loss * self.opt.R1_once_every
+#             with autocast():
+            r1_losses = self.model(images, command="compute_R1_loss")
+            d_losses.update(r1_losses)
+            r1_loss = sum([v.mean() for v in r1_losses.values()])
+            r1_loss = r1_loss * self.opt.R1_once_every
 #             r1_loss.backward()
             self.accelerator.backward(r1_loss)
             self.optimizer_D.step()

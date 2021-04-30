@@ -52,7 +52,7 @@ class Upsample(nn.Module):
 
     def forward(self, input):
         out = upfirdn2d(input, self.kernel, up=self.factor, down=1, pad=self.pad)
-
+#         print('fir',out.dtype)
         return out
 
 
@@ -83,7 +83,7 @@ class Downsample(nn.Module):
             pad = self.pad
 
         out = upfirdn2d(input, self.kernel, up=1, down=self.factor, pad=pad)
-
+#         print('fir',out.dtype)
         return out
 
 
@@ -108,7 +108,7 @@ class Blur(nn.Module):
         if self.reflection:
             input = self.reflection_pad(input)
         out = upfirdn2d(input, self.kernel, pad=self.pad)
-
+#         print("fir",out.dtype)
         return out
 
 
@@ -140,6 +140,8 @@ class EqualConv2d(nn.Module):
             stride=self.stride,
             padding=self.padding,
         )
+#         assert out.dtype==torch.float16
+#         print(out.dtype)
 
         return out
 
@@ -186,7 +188,7 @@ class EqualLinear(nn.Module):
                 out = F.linear(
                     input, self.weight * self.scale, bias=self.bias * self.lr_mul
                 )
-
+#         print(out.dtype)
         return out
 
     def __repr__(self):
@@ -203,7 +205,7 @@ class ScaledLeakyReLU(nn.Module):
 
     def forward(self, input):
         out = F.leaky_relu(input, negative_slope=self.negative_slope)
-
+#         print(out.dtype)
         return out * math.sqrt(2)
 
 
@@ -321,7 +323,7 @@ class ModulatedConv2d(nn.Module):
             out = F.conv2d(input, weight, padding=self.padding, groups=batch)
             _, _, height, width = out.shape
             out = out.view(batch, self.out_channel, height, width)
-
+#         print(out.dtype)
         return out
 
 
@@ -347,7 +349,8 @@ class NoiseInjection(nn.Module):
                 noise = F.interpolate(noise, image.shape[2:], mode="nearest")
         else:
             pass  # use the passed noise
-
+#         print(image.dtype)
+#         print(noise.dtype)
         return image + self.weight * noise
 
 
@@ -360,7 +363,7 @@ class ConstantInput(nn.Module):
     def forward(self, input):
         batch = input.shape[0]
         out = self.input.repeat(batch, 1, 1, 1)
-
+#         print(out.dtype)
         return out
 
 
@@ -401,7 +404,7 @@ class StyledConv(nn.Module):
             out = self.noise(out, noise=noise)
         # out = out + self.bias
         out = self.activate(out)
-
+#         print(out.dtype)
         return out
 
 
@@ -423,7 +426,7 @@ class ToRGB(nn.Module):
             skip = self.upsample(skip)
 
             out = out + skip
-
+#         print(out.dtype)
         return out
 
 
@@ -587,7 +590,7 @@ class Generator(nn.Module):
 
         out = self.input(latent)
         out = self.conv1(out, latent[:, 0], noise=noise[0])
-
+#         print(out.dtype)
         skip = self.to_rgb1(out, latent[:, 1])
 
         i = 1
@@ -665,6 +668,7 @@ class ConvLayer(nn.Sequential):
 
     def forward(self, x):
         out = super().forward(x)
+#         print(out.dtype)
         return out
 
 
@@ -689,7 +693,7 @@ class ResBlock(nn.Module):
 
         skip = self.skip(input)
         out = (out + skip) / math.sqrt(2)
-
+#         print(out.dtype)
         return out
 
 
@@ -756,7 +760,7 @@ class Discriminator(nn.Module):
 
         out = out.view(batch, -1)
         out = self.final_linear(out)
-
+#         print(out.dtype)
         return out
 
     def get_features(self, input):

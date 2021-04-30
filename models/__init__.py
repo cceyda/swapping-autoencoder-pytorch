@@ -85,7 +85,7 @@ class MultiGPUModelWrapper():
 #         print(self.parallelized_model)
         
         self.singlegpu_model = self.parallelized_model.module
-        self.parallelized_model=accelerator.prepare(self.parallelized_model)
+#         self.singlegpu_model=accelerator.prepare(self.singlegpu_model)
         self.singlegpu_model(command="per_gpu_initialize")
         
 #         print(self.singlegpu_model.E)
