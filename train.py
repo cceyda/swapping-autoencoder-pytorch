@@ -7,8 +7,10 @@ from util import Visualizer
 from util import MetricTracker
 from evaluation import GroupEvaluator
 from accelerate import Accelerator
+import accelerate
 
-accelerator = Accelerator(device_placement=False)
+ddp_kwargs=accelerate.DistributedDataParallelKwargs( find_unused_parameters = True)
+accelerator = Accelerator(device_placement=True,kwargs_handlers=[ddp_kwargs])
 opt = TrainOptions().parse()
 dataset = data.create_dataset(opt)
 opt.dataset = dataset
@@ -17,11 +19,21 @@ visualizer = Visualizer(opt)
 metric_tracker = MetricTracker(opt)
 evaluators = GroupEvaluator(opt)
 
-model = models.create_model(opt)
+model = models.create_model(opt,accelerator)
+
 optimizer = optimizers.create_optimizer(opt, model)
 optimizer.accelerator=accelerator
+print('pre acc')
+print(optimizer.optimizer_G)
+print(optimizer.optimizer_D)
 
-model, optimizer, dataset.dataloader = accelerator.prepare(model, optimizer, dataset.dataloader)
+optimizer.optimizer_G=accelerator.prepare(optimizer.optimizer_G)
+optimizer.optimizer_D=accelerator.prepare(optimizer.optimizer_D)
+print('post acc')
+print(optimizer.optimizer_G)
+print(optimizer.optimizer_D)
+
+dataset.dataloader = accelerator.prepare(dataset.dataloader)
 
 while not iter_counter.completed_training():
     with iter_counter.time_measurement("data"):

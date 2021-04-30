@@ -45,7 +45,7 @@ class SwappingAutoencoderModel(BaseModel):
             self.load()
 
         if self.opt.num_gpus > 0:
-            self.to("cuda:0")
+            self.to(self.device)
 
     def per_gpu_initialize(self):
         pass

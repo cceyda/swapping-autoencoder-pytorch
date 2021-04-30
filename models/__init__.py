@@ -54,7 +54,7 @@ def get_option_setter(model_name):
     return model_class.modify_commandline_options
 
 
-def create_model(opt):
+def create_model(opt,accelerator):
     """Create a model given the option.
 
     This function warps the class CustomDatasetDataLoader.
@@ -66,21 +66,27 @@ def create_model(opt):
     """
     model = find_model_using_name(opt.model)
     instance = model(opt)
+    instance.device=accelerator.device
     instance.initialize()
-    multigpu_instance = MultiGPUModelWrapper(opt, instance)
+    multigpu_instance = MultiGPUModelWrapper(opt, instance,accelerator)
     print("model [%s] was created" % type(instance).__name__)
     return multigpu_instance
 
 
 class MultiGPUModelWrapper():
-    def __init__(self, opt, model: BaseModel):
+    def __init__(self, opt, model: BaseModel,accelerator):
         self.opt = opt
         if opt.num_gpus > 0:
-            model = model.to('cuda:0')
-        self.parallelized_model = torch.nn.parallel.DataParallel(model)
+            model = model.to(model.device)
+        print(model)
+#         self.parallelized_model = torch.nn.parallel.DataParallel(model)
+        self.parallelized_model=accelerator.prepare(model)
         self.parallelized_model(command="per_gpu_initialize")
+        print(self.parallelized_model)
+        
         self.singlegpu_model = self.parallelized_model.module
         self.singlegpu_model(command="per_gpu_initialize")
+        print(self.singlegpu_model.E)
 
     def get_parameters_for_mode(self, mode):
         return self.singlegpu_model.get_parameters_for_mode(mode)
