@@ -15,11 +15,15 @@ class BaseNetwork(torch.nn.Module):
         result = '-------------------%s---------------------\n' % name
         total_num_params = 0
         for i, (name, child) in enumerate(self.named_children()):
+            types= [p.dtype for p in child.parameters()]
+            print(types)
             num_params = sum([p.numel() for p in child.parameters()])
             total_num_params += num_params
             if verbose:
                 result += "%s: %3.3fM\n" % (name, (num_params / 1e6))
             for i, (name, grandchild) in enumerate(child.named_children()):
+                types= [p.dtype for p in grandchild.parameters()]
+                print(types)
                 num_params = sum([p.numel() for p in grandchild.parameters()])
                 if verbose:
                     result += "\t%s: %3.3fM\n" % (name, (num_params / 1e6))

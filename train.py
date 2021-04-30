@@ -9,8 +9,8 @@ from evaluation import GroupEvaluator
 from accelerate import Accelerator
 import accelerate
 
-ddp_kwargs=accelerate.DistributedDataParallelKwargs( find_unused_parameters = True)
-accelerator = Accelerator(device_placement=True,kwargs_handlers=[ddp_kwargs])
+# ddp_kwargs=accelerate.DistributedDataParallelKwargs( find_unused_parameters = True)
+accelerator = Accelerator(fp16 =True,device_placement=False)
 opt = TrainOptions().parse()
 dataset = data.create_dataset(opt)
 opt.dataset = dataset

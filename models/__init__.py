@@ -66,7 +66,7 @@ def create_model(opt,accelerator):
     """
     model = find_model_using_name(opt.model)
     instance = model(opt)
-    instance.device=accelerator.device
+#     instance.device=accelerator.device
     instance.initialize()
     multigpu_instance = MultiGPUModelWrapper(opt, instance,accelerator)
     print("model [%s] was created" % type(instance).__name__)
@@ -77,16 +77,18 @@ class MultiGPUModelWrapper():
     def __init__(self, opt, model: BaseModel,accelerator):
         self.opt = opt
         if opt.num_gpus > 0:
-            model = model.to(model.device)
-        print(model)
-#         self.parallelized_model = torch.nn.parallel.DataParallel(model)
-        self.parallelized_model=accelerator.prepare(model)
+            model = model.to("cuda:0")
+#         print(model)
+        self.parallelized_model = torch.nn.parallel.DataParallel(model)
+#         self.parallelized_model=accelerator.prepare(model)
         self.parallelized_model(command="per_gpu_initialize")
-        print(self.parallelized_model)
+#         print(self.parallelized_model)
         
         self.singlegpu_model = self.parallelized_model.module
+        self.parallelized_model=accelerator.prepare(self.parallelized_model)
         self.singlegpu_model(command="per_gpu_initialize")
-        print(self.singlegpu_model.E)
+        
+#         print(self.singlegpu_model.E)
 
     def get_parameters_for_mode(self, mode):
         return self.singlegpu_model.get_parameters_for_mode(mode)

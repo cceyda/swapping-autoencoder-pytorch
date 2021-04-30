@@ -1,6 +1,6 @@
 import os
 import torch
-
+from torch.cuda.amp import autocast
 
 class BaseModel(torch.nn.Module):
     @staticmethod
@@ -110,7 +110,8 @@ class BaseModel(torch.nn.Module):
                 continue
             own_param.copy_(param)
         print("checkpoint loaded from %s" % os.path.join(loaddir, checkpoint_name))
-
+    
+#     @autocast()
     def forward(self, *args, command=None, **kwargs):
         """ wrapper for multigpu training. BaseModel is expected to be
         wrapped in nn.parallel.DataParallel, which distributes its call to
@@ -118,6 +119,25 @@ class BaseModel(torch.nn.Module):
         if command is not None:
             method = getattr(self, command)
             assert callable(method), "[%s] is not a method of %s" % (command, type(self).__name__)
-            return method(*args, **kwargs)
+            with autocast():
+                res= method(*args, **kwargs)
+                if res:
+                    if isinstance(res,dict):
+                        for r in res.keys():
+    #                         print(type(res[r]))
+                            if isinstance(res[r],torch.Tensor):
+                                print(r,res[r].shape,res[r].dtype)
+                    elif isinstance(res,tuple):
+                        for r in res:
+    #                         print(type(r))
+                            if isinstance(r,torch.Tensor):
+                                print(r.shape,r.dtype)
+                            elif isinstance(r,dict):
+                                for p in r.keys():
+                                    print(type(r[p]))
+                                    if isinstance(r[p],torch.Tensor):
+                                        print(p,r[p].shape,r[p].dtype)
+
+                return res
         else:
             raise ValueError(command)
