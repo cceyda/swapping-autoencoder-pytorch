@@ -72,9 +72,7 @@ while not iter_counter.completed_training():
         if iter_counter.needs_printing():
             visualizer.print_current_losses(iter_counter.steps_so_far,
                                             iter_counter.time_measurements,
-                                            metric_tracker.current_metrics())
-            if iter_counter.steps_so_far!=0:
-                end_timer_and_print("Default precision:")
+                                            metric_tracker.current_metrics())               
 
         if iter_counter.needs_displaying():
             visuals = optimizer.get_visuals_for_snapshot(cur_data)
@@ -85,6 +83,7 @@ while not iter_counter.completed_training():
             metrics = evaluators.evaluate(
                 model, dataset, iter_counter.steps_so_far)
             metric_tracker.update_metrics(metrics, smoothe=False)
+            end_timer_and_print("Default precision:")
 
         if iter_counter.needs_saving():
             optimizer.save(iter_counter.steps_so_far)
